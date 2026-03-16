@@ -1,5 +1,6 @@
 ﻿using HxcMigrationImportExportTool.Parsers;
 using HxcMigrationImportExportTool.Services;
+using HxcMigrationImportExportTool.Models;
 using Microsoft.Win32;
 using System.IO;
 using System.Text;
@@ -13,6 +14,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Xml.Linq;
+using System.Diagnostics; 
 
 namespace HxcMigrationImportExportTool
 {
@@ -42,28 +44,42 @@ namespace HxcMigrationImportExportTool
 
         private void AnalyzeZip(string zipPath)
         {
-            var folder = ZipService.Extract(zipPath);
+            Logger.Log("Start Analyze ZIP");
 
+            var folder = ZipService.Extract(zipPath);  
             var xmlFiles = Directory.GetFiles(folder, "*.xml.export", SearchOption.AllDirectories);
-
+ 
             var pageTypeFile = xmlFiles.FirstOrDefault(x => x.Contains("cms_documenttype"));
             var customTableFile = xmlFiles.FirstOrDefault(x => x.Contains("cms_customtable"));
             var resourceFile = xmlFiles.FirstOrDefault(x => x.Contains("cms_resourcestring"));
-             
+
+            Logger.Log($"Extract folder : {folder}");
+            foreach (var file in xmlFiles)
+            {
+                Logger.Log($"XML Found : {file}");
+            }
+
             if (pageTypeFile != null)
             {
+                Logger.Log("PageType export detected");
+
                 LoadPageTypes(pageTypeFile);
             }
 
             if (customTableFile != null)
             {
+                Logger.Log("CustomTable export detected");
+
                 LoadCustomTables(customTableFile);
             }
 
             if (resourceFile != null)
             {
+                Logger.Log("ResourceString export detected");
+
                 LoadResourceStrings(resourceFile);
-            }            
+            }
+            Logger.Log("Analyze ZIP finished");
         }
 
         private void LoadPageTypes(string xmlFile)
@@ -97,7 +113,24 @@ namespace HxcMigrationImportExportTool
 
         private void gridPageTypes_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            //if (gridPageTypes.SelectedItem is K13PageType pageType)
+            //{
+            //    if (pageType.Fields == null || pageType.Fields.Count == 0)
+            //    {
+            //        MessageBox.Show("No fields found.", pageType.ClassName);
+            //        return;
+            //    }
 
+            //    var fields = string.Join("\n",
+            //        pageType.Fields.Select(f => $"{f.Column} ({f.DataType})"));
+
+            //    MessageBox.Show(fields, $"Fields of {pageType.ClassName}");
+            //}
+
+            if (gridPageTypes.SelectedItem is K13PageType pageType)
+            {
+                gridFields.ItemsSource = pageType.Fields;
+            }
         }
     } 
 }
