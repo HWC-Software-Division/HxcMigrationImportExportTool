@@ -1,0 +1,68 @@
+﻿<Window x:Class="HxcMigrationImportExportTool.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="HXC Import/Expoty K13 → Xperience Tool"
+        Height="500"
+        Width="800">
+
+    <Grid Margin="10">
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Select ZIP -->
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+
+            <Button Name="btnSelectZip"
+                    Width="120"
+                    Height="30"
+                    Click="BtnSelectZip_Click">
+                Select ZIP
+            </Button>
+
+            <TextBox Name="txtZipFile"
+                     Margin="10,0,0,0"
+                     Width="500"/>
+
+        </StackPanel>
+
+        <!-- PageType Count -->
+        <TextBlock Grid.Row="1"
+                   FontSize="16"
+                   Margin="0,0,0,10">
+            PageTypes Found :
+            <Run Name="txtPageTypeCount" Text="0"/>
+        </TextBlock>
+
+        <!-- PageType List -->
+        <DataGrid Grid.Row="2"
+                  Name="gridPageTypes"
+                  AutoGenerateColumns="False" SelectionChanged="gridPageTypes_SelectionChanged">
+
+            <DataGrid.Columns>
+
+                <DataGridTextColumn
+                    Header="ClassName"
+                    Binding="{Binding ClassName}"
+                    Width="250"/>
+
+                <DataGridTextColumn
+                    Header="DisplayName"
+                    Binding="{Binding DisplayName}"
+                    Width="250"/>
+
+                <DataGridTextColumn
+                    Header="TableName"
+                    Binding="{Binding TableName}"
+                    Width="250"/>
+
+            </DataGrid.Columns>
+
+        </DataGrid>
+
+    </Grid>
+
+</Window>
