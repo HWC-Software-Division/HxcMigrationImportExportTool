@@ -1,7 +1,9 @@
-﻿using HxcMigrationImportExportTool.Parsers;
+﻿using HxcMigrationImportExportTool.Models;
+using HxcMigrationImportExportTool.Parsers;
 using HxcMigrationImportExportTool.Services;
-using HxcMigrationImportExportTool.Models;
+using HxcMigrationImportExportTool.Views;
 using Microsoft.Win32;
+using System.Diagnostics; 
 using System.IO;
 using System.Text;
 using System.Windows;
@@ -14,7 +16,6 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Xml.Linq;
-using System.Diagnostics; 
 
 namespace HxcMigrationImportExportTool
 {
@@ -132,5 +133,25 @@ namespace HxcMigrationImportExportTool
                 gridFields.ItemsSource = pageType.Fields;
             }
         }
-    } 
+
+        #region Action Click
+        private void BtnDbSetting_Click(object sender, RoutedEventArgs e)
+        {
+            var win = new DbSettingWindow();
+            win.ShowDialog();
+        }
+
+        private void BtnMigrate_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Start Migrate 🚀");
+        }
+
+        private void BtnExportReport_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Export Report 📄");
+        }
+
+        #endregion
+
+    }
 }
