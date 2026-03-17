@@ -9,5 +9,7 @@ namespace HxcMigrationImportExportTool.Models
         public string? TableName { get; set; }
 
         public string? DisplayName { get; set; }
+
+        public List<K13Field> Fields { get; set; } = new();
     }
 }
