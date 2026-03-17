@@ -2,17 +2,17 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="HXC Import/Expoty K13 → Xperience Tool"
-        Height="766"
-        Width="722">
+        Height="Auto"
+        Width="750">
 
-    <Grid Margin="10,10,10,0" Height="464" VerticalAlignment="Top">
+    <Grid Margin="10" VerticalAlignment="Top">
 
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="200"/>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>  <!-- Select ZIP -->
+            <RowDefinition Height="Auto"/>  <!-- Summary Count -->
+            <RowDefinition Height="300"/>   <!-- Tabs List -->
+            <RowDefinition Height="200"/>   <!-- Dynamic detail -->
+            <RowDefinition Height="100"/>  <!-- Button Action -->
         </Grid.RowDefinitions>
 
         <!-- Select ZIP -->
@@ -27,94 +27,79 @@
 
             <TextBox Name="txtZipFile"
                      Margin="10,0,0,0"
-                     Width="500"/>
+                     Width="600"/>
 
         </StackPanel>
 
-        <!-- PageType Count -->
-        <TextBlock Grid.Row="1"
-                   FontSize="16"
-                   Margin="0,0,0,10">
-            PageTypes Found :
-            <Run Name="txtPageTypeCount" Text="0"/>
-        </TextBlock>
+        <!-- Summary Count (PageType, ResourceString, CustomTable) -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10">
+            <TextBlock Text="PageType : "/>
+            <TextBlock Name="txtPageTypeCount"/>
 
-        <!-- PageType List -->
-        <DataGrid Grid.Row="1"
-                  Name="gridPageTypes"
-                  AutoGenerateColumns="False" SelectionChanged="gridPageTypes_SelectionChanged" Margin="0,31,0,0" Grid.RowSpan="3">
+            <TextBlock Text="    ResourceString : "/>
+            <TextBlock Name="txtResourceCount"/>
 
-            <DataGrid.Columns>
+            <TextBlock Text="    CustomTable : "/>
+            <TextBlock Name="txtCustomCount"/>
+        </StackPanel>
 
-                <DataGridTextColumn
-                    Header="ClassName"
-                    Binding="{Binding ClassName}"
-                    Width="200"/>
+        <!-- Tabs List -->
+        <TabControl Grid.Row="2" SelectionChanged="TabControl_SelectionChanged">
 
-                <DataGridTextColumn
-                    Header="DisplayName"
-                    Binding="{Binding DisplayName}"
-                    Width="200"/>
+            <TabItem Header="PageType">
+                <DataGrid Name="gridPageTypes"
+                          AutoGenerateColumns="False"
+                          SelectionChanged="GridPageTypes_SelectionChanged">
 
-                <DataGridTextColumn
-                    Header="TableName"
-                    Binding="{Binding TableName}"
-                    Width="200"/>
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="ClassName" Binding="{Binding ClassName}" Width="200"/>
+                        <DataGridTextColumn Header="DisplayName" Binding="{Binding DisplayName}" Width="200"/>
+                        <DataGridTextColumn Header="TableName" Binding="{Binding TableName}" Width="200"/>
+                        <DataGridTextColumn Header="Field Count" Binding="{Binding Fields.Count}" Width="150"/>
+                    </DataGrid.Columns>
+                    
+                </DataGrid>
+            </TabItem>
 
-                <DataGridTextColumn Header="Field Count"
-                    Binding="{Binding Fields.Count}"
-                    Width="100"/>
+            <TabItem Header="ResourceString">
+                <DataGrid Name="gridResource"
+                          AutoGenerateColumns="True"
+                          SelectionChanged="GridResource_SelectionChanged"/>
+            </TabItem>
 
-            </DataGrid.Columns>
+            <TabItem Header="CustomTable">
+                <DataGrid Name="gridCustom"
+                          AutoGenerateColumns="True"
+                          SelectionChanged="GridCustom_SelectionChanged"/>
+            </TabItem>
 
-        </DataGrid>
+        </TabControl>
 
+        <!-- DYNAMIC DETAIL -->
         <DataGrid Grid.Row="3"
-          Name="gridFields"
-          AutoGenerateColumns="False"
-          Margin="0,205,0,-255">
+              Name="gridDetail"
+              AutoGenerateColumns="True"/>
 
-            <DataGrid.Columns>
-
-                <DataGridTextColumn Header="Column"
-                            Binding="{Binding Column}"
-                            Width="200"/>
-
-                <DataGridTextColumn Header="DataType"
-                            Binding="{Binding DataType}"
-                            Width="200"/>
-
-            </DataGrid.Columns>
-
-        </DataGrid>
-
+        <!-- Button Action -->
         <StackPanel Grid.Row="4"
             Orientation="Horizontal"
             HorizontalAlignment="Center"
-            Margin="0,260,0,-252" Width="702">
+            Margin="0,10">
 
-            <Button Name="btnDbSetting"
-            Width="140"
-            Height="35"
-            Margin="5"
-            >
+            <Button Name="btnDbSetting" Width="140" Height="35" Margin="5" Click="BtnDbSetting_Click">
                 DB Setting
             </Button>
 
-            <Button Name="btnMigrate"
-            Width="160"
-            Height="35"
-            Margin="5"
-            >
+            <Button Name="btnMigrate" Width="160" Height="35" Margin="5" Click="BtnMigrate_Click">
                 Migrate Selected
             </Button>
 
-            <Button Name="btnExportReport"
-            Width="140"
-            Height="35"
-            Margin="5"
-             >
+            <Button Name="btnExportReport" Width="140" Height="35" Margin="5" Click="BtnExportReport_Click">
                 Export Report
+            </Button>
+
+            <Button Name="ClearScreen" Width="140" Height="35" Margin="5" Click="BtnClearScreen_Click">
+                Clear Screen
             </Button>
 
         </StackPanel>
