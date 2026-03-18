@@ -5,6 +5,7 @@ using HxcMigrationImportExportTool.Views;
 using Microsoft.Win32;
 using System.Diagnostics; 
 using System.IO;
+using System.Resources;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -24,6 +25,10 @@ namespace HxcMigrationImportExportTool
     /// </summary>
     public partial class MainWindow : Window
     {
+        private List<K13PageType> _pageTypes = new();
+        private List<K13ResourceString> _resources = new();
+        private List<K13CustomTable> _customTables = new();
+
         public MainWindow()
         {
             InitializeComponent();
@@ -83,14 +88,16 @@ namespace HxcMigrationImportExportTool
             Logger.Log("Analyze ZIP finished");
         }
 
+        #region Load and Parse XML
         private void LoadPageTypes(string xmlFile)
         {
             var parser = new PageTypeParser();
 
             var pageTypes = parser.Parse(xmlFile);
 
-            txtPageTypeCount.Text = pageTypes.Count.ToString();
+            _pageTypes = pageTypes; 
 
+            txtPageTypeCount.Text = pageTypes.Count.ToString();
             gridPageTypes.ItemsSource = pageTypes;
         }
 
@@ -100,8 +107,9 @@ namespace HxcMigrationImportExportTool
 
             var tables = parser.Parse(xmlFile);
 
-            txtCustomCount.Text = tables.Count.ToString();
+            _customTables = tables;
 
+            txtCustomCount.Text = tables.Count.ToString();
             gridCustom.ItemsSource = tables;
 
             MessageBox.Show($"CustomTables detected : {tables.Count}");
@@ -113,13 +121,15 @@ namespace HxcMigrationImportExportTool
 
             var resources = parser.Parse(xmlFile);
 
-            txtResourceCount.Text = resources.Count.ToString();
+            _resources = resources;
 
+            txtResourceCount.Text = resources.Count.ToString();
             gridResource.ItemsSource = resources;
 
             MessageBox.Show($"ResourceStrings detected : {resources.Count}");
         }
 
+        #endregion
 
         #region Tabs List actions
         private void GridPageTypes_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -165,7 +175,23 @@ namespace HxcMigrationImportExportTool
 
         private void BtnMigrate_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Start Migrate 🚀");
+            //MessageBox.Show("Start Migrate 🚀");
+
+            var win = new MigrateSelectionWindow(
+                _pageTypes,
+                _resources,
+                _customTables
+            );
+
+            if (win.ShowDialog() == true)
+            {
+                // ✅ ดึงค่าที่เลือก
+                var selectedPageTypes = win.SelectedPageTypes;
+                var selectedResources = win.SelectedResources;
+                var selectedCustomTables = win.SelectedCustomTables;
+
+                MessageBox.Show($"Selected PageTypes: {selectedPageTypes.Count}");
+            }
         }
 
         private void BtnExportReport_Click(object sender, RoutedEventArgs e)
