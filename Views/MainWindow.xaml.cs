@@ -173,7 +173,7 @@ namespace HxcMigrationImportExportTool
             win.ShowDialog();
         }
 
-        private void BtnMigrate_Click(object sender, RoutedEventArgs e)
+        private async void BtnMigrate_Click(object sender, RoutedEventArgs e)
         {
             //MessageBox.Show("Start Migrate 🚀");
 
@@ -183,14 +183,31 @@ namespace HxcMigrationImportExportTool
                 _customTables
             );
 
+            //if (win.ShowDialog() == true)
+            //{
+            //    // ✅ ดึงค่าที่เลือก
+            //    var selectedPageTypes = win.SelectedPageTypes;
+            //    var selectedResources = win.SelectedResources;
+            //    var selectedCustomTables = win.SelectedCustomTables;
+
+            //    MessageBox.Show($"Selected PageTypes: {selectedPageTypes.Count}");
+            //}
+
             if (win.ShowDialog() == true)
             {
-                // ✅ ดึงค่าที่เลือก
-                var selectedPageTypes = win.SelectedPageTypes;
-                var selectedResources = win.SelectedResources;
-                var selectedCustomTables = win.SelectedCustomTables;
+                var api = new XbykApiService("http://localhost:34486/", "dev-key");
 
-                MessageBox.Show($"Selected PageTypes: {selectedPageTypes.Count}");
+                var service = new MigrateService(api);
+
+                //var (success, fail) = await service.MigratePageTypesAsync(win.SelectedPageTypes);
+                //MessageBox.Show($"✅ Success: {success}\n❌ Fail: {fail}");
+
+                var (success, fail, skip) = await service.MigratePageTypesAsync(win.SelectedPageTypes);
+
+                MessageBox.Show($"✅ Success: {success}\n" +
+                                $"⏭ Skip: {skip}\n" +
+                                $"❌ Fail: {fail}"
+                );
             }
         }
 
