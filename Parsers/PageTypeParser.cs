@@ -62,19 +62,77 @@ namespace HxcMigrationImportExportTool.Parsers
                         .Where(x => x.Name.LocalName == "field");
 
                     foreach (var f in fields)
-                    {
+                    { 
+                        var column = f.Attribute("column")?.Value;
+                        var dataType = f.Attribute("columntype")?.Value ?? "";
+
+                        var sizeAttr = f.Attributes()
+                            .FirstOrDefault(a => a.Name.LocalName.ToLower() == "columnsize")?.Value;
+
+                        int size = int.TryParse(sizeAttr, out var s) ? s : 0;
+
+                        //properties
+                        var properties = f.Elements()
+                            .FirstOrDefault(x => x.Name.LocalName == "properties");
+
+                        var caption = properties?
+                            .Elements()
+                            .FirstOrDefault(x => x.Name.LocalName == "fieldcaption")?.Value;
+
+
+                        var defaultValue = properties?
+                            .Elements()
+                            .FirstOrDefault(x => x.Name.LocalName == "defaultvalue")?.Value;
+
+                        //settings
+                        var settings = f.Elements()
+                            .FirstOrDefault(x => x.Name.LocalName == "settings");
+
+                        var control = settings?
+                            .Elements()
+                            .FirstOrDefault(x => x.Name.LocalName == "controlname")?.Value;
+
+                        var dataSource = settings?
+                            .Elements()
+                            .FirstOrDefault(x => x.Name.LocalName == "DataSource")?.Value;
+
+                        //validation
+                        var validation = f.Elements()
+                            .FirstOrDefault(x => x.Name.LocalName == "validation");
+
+                        var requiredStr = validation?
+                            .Elements()
+                            .FirstOrDefault(x => x.Name.LocalName == "allowempty")?.Value;
+
+                        bool required = requiredStr == "true";
+  
                         var field = new K13Field
                         {
-                            Column = f.Attribute("column")?.Value,
-                            DataType = f.Attribute("columntype")?.Value ?? ""
+                            Column = column,
+                            DataType = dataType,
+
+                            Required = required,
+                            Size = size,
+                            DefaultValue = defaultValue,
+                            Caption = caption,
+                            FormControl = control,
+                            DataSource = dataSource
                         };
 
                         pageType.Fields.Add(field);
 
                         Logger.Log("Field XML:");
                         Logger.Log(f.ToString());
-
-                        Logger.Log($"Field detected : {field.Column} ({field.DataType})");
+                        Logger.Log($@"
+                                Column: {field.Column}
+                                Type: {field.DataType}
+                                Required: {field.Required}
+                                Size: {field.Size}
+                                Control: {field.FormControl}
+                                Caption: {field.Caption}
+                                DataSource:
+                                {field.DataSource}
+                        ");
                     }
                 }
 

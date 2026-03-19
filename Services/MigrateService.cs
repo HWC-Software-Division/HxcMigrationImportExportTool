@@ -82,11 +82,13 @@ namespace HxcMigrationImportExportTool.Services
                 {
                     name = f.Column,
                     dataType = MapDataType(f.DataType),
-                     
-                    isRequired = false,
-                    size = 200,
-                    fieldType = MapFieldType(f.DataType),
-                    caption = f.Column
+
+                    isRequired = f.Required,
+                    size = GetFieldSize(f),
+                    defaultValue = f.DefaultValue,
+                    fieldType = MapFormControl(f),
+                    caption = f.Caption ?? f.Column,
+                    dataSource = f.DataSource
                 }).ToList()
             };
         }
@@ -106,7 +108,6 @@ namespace HxcMigrationImportExportTool.Services
                 "datetime" => "dateTime",
                 "date" => "date",
 
-                // advanced (ยังไม่ต้องทำก็ได้)
                 "file" => "mediaFiles",
                 "attachment" => "mediaFiles",
                 "pages" => "pages",
@@ -125,6 +126,39 @@ namespace HxcMigrationImportExportTool.Services
                 "integer" => "textbox",
                 "datetime" => "datetime",
                 _ => "textbox"
+            };
+        }
+
+        private string MapFormControl(K13Field f)
+        {
+            var control = f.FormControl?.ToLower();
+
+            return control switch
+            {
+                "media selection" => "media",
+                "file selector" => "media",
+                "image selector" => "media",
+
+                "textbox" => "textbox",
+                "textarea" => "textarea",
+                "dropdownlist" => "dropdown",
+                "checkbox" => "checkbox",
+                _ => "textbox"
+            };
+        }
+
+        private int GetFieldSize(K13Field f)
+        {
+            if (f.Size > 0)
+                return f.Size;
+
+            // fallback
+            return f.DataType.ToLower() switch
+            {
+                "text" => 200,
+                "longtext" => 1000,
+                "integer" => 0,
+                _ => 200
             };
         }
 
