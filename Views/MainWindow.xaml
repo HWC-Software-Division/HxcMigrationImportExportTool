@@ -1,109 +1,128 @@
 ﻿<Window x:Class="HxcMigrationImportExportTool.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="HXC Import/Expoty K13 → Xperience Tool"
-        Height="Auto"
-        Width="750">
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="HXC Import/Export K13"
+        Height="720"
+        Width="980">
 
-    <Grid Margin="10" VerticalAlignment="Top">
-
+    <Grid Margin="10">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>  <!-- Select ZIP -->
-            <RowDefinition Height="Auto"/>  <!-- Summary Count -->
-            <RowDefinition Height="300"/>   <!-- Tabs List -->
-            <RowDefinition Height="200"/>   <!-- Dynamic detail -->
-            <RowDefinition Height="100"/>  <!-- Button Action -->
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="320"/>
+            <RowDefinition Height="220"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Select ZIP -->
+        <!-- ZIP -->
         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-
             <Button Name="btnSelectZip"
                     Width="120"
                     Height="30"
-                    Click="BtnSelectZip_Click">
-                Select ZIP
-            </Button>
+                    Click="BtnSelectZip_Click"
+                    Content="Select ZIP"/>
 
             <TextBox Name="txtZipFile"
                      Margin="10,0,0,0"
-                     Width="600"/>
-
+                     Width="800"/>
         </StackPanel>
 
-        <!-- Summary Count (PageType, ResourceString, CustomTable) -->
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10">
+        <!-- Summary -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
             <TextBlock Text="PageType : "/>
-            <TextBlock Name="txtPageTypeCount"/>
+            <TextBlock Name="txtPageTypeCount" FontWeight="Bold" Margin="0,0,20,0"/>
 
-            <TextBlock Text="    ResourceString : "/>
-            <TextBlock Name="txtResourceCount"/>
+            <TextBlock Text="ResourceString : "/>
+            <TextBlock Name="txtResourceCount" FontWeight="Bold" Margin="0,0,20,0"/>
 
-            <TextBlock Text="    CustomTable : "/>
-            <TextBlock Name="txtCustomCount"/>
+            <TextBlock Text="CustomTable : "/>
+            <TextBlock Name="txtCustomCount" FontWeight="Bold"/>
         </StackPanel>
 
-        <!-- Tabs List -->
-        <TabControl Grid.Row="2" SelectionChanged="TabControl_SelectionChanged">
+        <!-- Main Tabs -->
+        <TabControl Grid.Row="2"
+                    Name="tabMain"
+                    SelectionChanged="TabControl_SelectionChanged">
 
             <TabItem Header="PageType">
                 <DataGrid Name="gridPageTypes"
                           AutoGenerateColumns="False"
+                          IsReadOnly="True"
                           SelectionChanged="GridPageTypes_SelectionChanged">
-
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="ClassName" Binding="{Binding ClassName}" Width="200"/>
-                        <DataGridTextColumn Header="DisplayName" Binding="{Binding DisplayName}" Width="200"/>
-                        <DataGridTextColumn Header="TableName" Binding="{Binding TableName}" Width="200"/>
-                        <DataGridTextColumn Header="Field Count" Binding="{Binding Fields.Count}" Width="150"/>
+                        <DataGridTextColumn Header="ClassName" Binding="{Binding ClassName}" Width="220"/>
+                        <DataGridTextColumn Header="DisplayName" Binding="{Binding DisplayName}" Width="220"/>
+                        <DataGridTextColumn Header="TableName" Binding="{Binding TableName}" Width="220"/>
+                        <DataGridTextColumn Header="Field Count" Binding="{Binding Fields.Count}" Width="120"/>
                     </DataGrid.Columns>
-                    
                 </DataGrid>
             </TabItem>
 
             <TabItem Header="ResourceString">
                 <DataGrid Name="gridResource"
-                          AutoGenerateColumns="True"
-                          SelectionChanged="GridResource_SelectionChanged"/>
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          SelectionChanged="GridResource_SelectionChanged">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="80"/>
+                        <DataGridTextColumn Header="Key" Binding="{Binding Key}" Width="280"/>
+                        <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="220"/>
+                        <DataGridTextColumn Header="Language Count" Binding="{Binding LanguageCount}" Width="120"/>
+                        <DataGridTextColumn Header="Languages" Binding="{Binding LanguagesDisplay}" Width="*"/>
+                    </DataGrid.Columns>
+                </DataGrid>
             </TabItem>
 
             <TabItem Header="CustomTable">
                 <DataGrid Name="gridCustom"
                           AutoGenerateColumns="True"
+                          IsReadOnly="True"
                           SelectionChanged="GridCustom_SelectionChanged"/>
             </TabItem>
 
         </TabControl>
 
-        <!-- DYNAMIC DETAIL -->
-        <DataGrid Grid.Row="3"
-              Name="gridDetail"
-              AutoGenerateColumns="True"/>
+        <!-- Detail -->
+        <GroupBox Grid.Row="3" Header="Detail" Margin="0,10,0,10">
+            <DataGrid Name="gridDetail"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True"/>
+        </GroupBox>
 
-        <!-- Button Action -->
+        <!-- Buttons -->
         <StackPanel Grid.Row="4"
-            Orientation="Horizontal"
-            HorizontalAlignment="Center"
-            Margin="0,10">
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Center">
+            <Button Name="btnDbSetting"
+                    Width="130"
+                    Height="35"
+                    Margin="5"
+                    Click="BtnDbSetting_Click"
+                    Content="DB Setting"/>
 
-            <Button Name="btnDbSetting" Width="140" Height="35" Margin="5" Click="BtnDbSetting_Click">
-                DB Setting
-            </Button>
+            <Button Name="btnMigrate"
+                    Width="150"
+                    Height="35"
+                    Margin="5"
+                    Click="BtnMigrate_Click"
+                    Content="Migrate Selected"/>
 
-            <Button Name="btnMigrate" Width="160" Height="35" Margin="5" Click="BtnMigrate_Click">
-                Migrate Selected
-            </Button>
+            <Button Name="btnExportReport"
+                    Width="130"
+                    Height="35"
+                    Margin="5"
+                    Click="BtnExportReport_Click"
+                    Content="Export Report"/>
 
-            <Button Name="btnExportReport" Width="140" Height="35" Margin="5" Click="BtnExportReport_Click">
-                Export Report
-            </Button>
-
-            <Button Name="ClearScreen" Width="140" Height="35" Margin="5" Click="BtnClearScreen_Click">
-                Clear Screen
-            </Button>
-
+            <Button Name="btnClearScreen"
+                    Width="130"
+                    Height="35"
+                    Margin="5"
+                    Click="BtnClearScreen_Click"
+                    Content="Clear Screen"/>
         </StackPanel>
-
     </Grid>
-
 </Window>

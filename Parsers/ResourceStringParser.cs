@@ -4,7 +4,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
+using System.Xml;
 using System.Xml.Linq;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace HxcMigrationImportExportTool.Parsers
 {
@@ -28,7 +31,16 @@ namespace HxcMigrationImportExportTool.Parsers
 
             Logger.Log($"ResourceStringParser: loading resource XML => {xmlPath}");
 
-            var resourceDoc = XDocument.Load(xmlPath);
+            XDocument resourceDoc;
+            try
+            {
+                resourceDoc = LoadSanitizedXml(xmlPath);
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"ResourceStringParser: failed to load resource XML => {ex.Message}");
+                throw;
+            }
 
             var rootFolder = GetSearchRootFolder(xmlPath);
             var objectTranslationPath = Directory
@@ -128,7 +140,7 @@ namespace HxcMigrationImportExportTool.Parsers
 
             try
             {
-                var doc = XDocument.Load(objectTranslationPath);
+                var doc = LoadSanitizedXml(objectTranslationPath);
 
                 result = doc
                     .Descendants()
@@ -154,6 +166,137 @@ namespace HxcMigrationImportExportTool.Parsers
             }
 
             return result;
+        }
+
+        private XDocument LoadSanitizedXml(string path)
+        {
+            string raw;
+
+            using (var reader = new StreamReader(path, detectEncodingFromByteOrderMarks: true))
+            {
+                raw = reader.ReadToEnd();
+            }
+
+            Logger.Log($"ResourceStringParser: loading file => {path}");
+            Logger.Log($"ResourceStringParser: raw length => {raw.Length}");
+
+            // ลบตัวที่เจอบ่อยแบบตรง ๆ ก่อน
+            raw = raw.Replace("\u000B", string.Empty);
+
+            var cleaned = RemoveInvalidXmlChars(raw);
+
+            Logger.Log($"ResourceStringParser: cleaned length => {cleaned.Length}");
+            Logger.Log($"ResourceStringParser: index of 0x0B after clean => {cleaned.IndexOf('\u000B')}");
+
+            var settings = new XmlReaderSettings
+            {
+                CheckCharacters = false,
+                DtdProcessing = DtdProcessing.Ignore
+            };
+
+            using var stringReader = new StringReader(cleaned);
+            using var xmlReader = XmlReader.Create(stringReader, settings);
+
+            return XDocument.Load(xmlReader, LoadOptions.PreserveWhitespace);
+        }
+
+        private string RemoveInvalidXmlChars(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                return string.Empty;
+            }
+
+            var sb = new StringBuilder(text.Length);
+            var removedCount = 0;
+
+            for (int i = 0; i < text.Length; i++)
+            {
+                char ch = text[i];
+
+                // ลบทิ้งตรง ๆ สำหรับตัวที่ทำให้ล่มบ่อย
+                if (ch == '\u0000' || ch == '\u0001' || ch == '\u0002' || ch == '\u0003' ||
+                    ch == '\u0004' || ch == '\u0005' || ch == '\u0006' || ch == '\u0007' ||
+                    ch == '\u0008' || ch == '\u000B' || ch == '\u000C' ||
+                    ch == '\u000E' || ch == '\u000F' || ch == '\u0010' || ch == '\u0011' ||
+                    ch == '\u0012' || ch == '\u0013' || ch == '\u0014' || ch == '\u0015' ||
+                    ch == '\u0016' || ch == '\u0017' || ch == '\u0018' || ch == '\u0019' ||
+                    ch == '\u001A' || ch == '\u001B' || ch == '\u001C' || ch == '\u001D' ||
+                    ch == '\u001E' || ch == '\u001F')
+                {
+                    removedCount++;
+
+                    if (removedCount <= 20)
+                    {
+                        Logger.Log($"ResourceStringParser: removed control char 0x{((int)ch):X4}");
+                    }
+
+                    continue;
+                }
+
+                if (char.IsHighSurrogate(ch))
+                {
+                    if (i + 1 < text.Length && char.IsLowSurrogate(text[i + 1]))
+                    {
+                        int codePoint = char.ConvertToUtf32(ch, text[i + 1]);
+
+                        if (IsValidXmlCodePoint(codePoint))
+                        {
+                            sb.Append(ch);
+                            sb.Append(text[i + 1]);
+                        }
+                        else
+                        {
+                            removedCount++;
+
+                            if (removedCount <= 20)
+                            {
+                                Logger.Log($"ResourceStringParser: removed invalid surrogate code point 0x{codePoint:X}");
+                            }
+                        }
+
+                        i++;
+                        continue;
+                    }
+
+                    removedCount++;
+                    continue;
+                }
+
+                if (char.IsLowSurrogate(ch))
+                {
+                    removedCount++;
+                    continue;
+                }
+
+                if (XmlConvert.IsXmlChar(ch))
+                {
+                    sb.Append(ch);
+                }
+                else
+                {
+                    removedCount++;
+
+                    if (removedCount <= 20)
+                    {
+                        Logger.Log($"ResourceStringParser: removed invalid char 0x{((int)ch):X4}");
+                    }
+                }
+            }
+
+            Logger.Log($"ResourceStringParser: total invalid XML chars removed = {removedCount}");
+
+            return sb.ToString();
+        }
+
+        private bool IsValidXmlCodePoint(int codePoint)
+        {
+            return codePoint == 0x9
+                   || codePoint == 0xA
+                   || codePoint == 0xD
+                   || (codePoint >= 0x20 && codePoint <= 0xD7FF)
+                   || (codePoint >= 0xE000 && codePoint <= 0xFFFD)
+                   || (codePoint >= 0x10000 && codePoint <= 0x10FFFF);
         }
 
         private string GetSearchRootFolder(string resourceXmlPath)
