@@ -3,6 +3,8 @@ using HxcMigrationImportExportTool.Services;
 using HxcMigrationImportExportTool.Models;
 using Microsoft.Win32;
 using System.IO;
+using System.Resources;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Linq;
@@ -12,6 +14,9 @@ namespace HxcMigrationImportExportTool
 {
     public partial class MainWindow : Window
     {
+        private List<K13PageType> _pageTypes = new();
+        private List<K13CustomTable> _customTables = new();
+
         private List<K13ResourceString> _resourceStrings = new();
         private List<ResourceStringGridRow> _resourceGridRows = new();
 
@@ -39,15 +44,14 @@ namespace HxcMigrationImportExportTool
         {
             Logger.Log("Start Analyze ZIP");
 
-            var folder = ZipService.Extract(zipPath);
+            var folder = ZipService.Extract(zipPath);  
             var xmlFiles = Directory.GetFiles(folder, "*.xml.export", SearchOption.AllDirectories);
-
+ 
             var pageTypeFile = xmlFiles.FirstOrDefault(x => x.Contains("cms_documenttype"));
             var customTableFile = xmlFiles.FirstOrDefault(x => x.Contains("cms_customtable"));
             var resourceFile = xmlFiles.FirstOrDefault(x => x.Contains("cms_resourcestring"));
 
             Logger.Log($"Extract folder : {folder}");
-
             foreach (var file in xmlFiles)
             {
                 Logger.Log($"XML Found : {file}");
@@ -91,10 +95,13 @@ namespace HxcMigrationImportExportTool
             Logger.Log("Analyze ZIP finished");
         }
 
+        #region Load and Parse XML
         private void LoadPageTypes(string xmlFile)
         {
             var parser = new PageTypeParser();
             var pageTypes = parser.Parse(xmlFile);
+
+            _pageTypes = pageTypes; 
 
             txtPageTypeCount.Text = pageTypes.Count.ToString();
             gridPageTypes.ItemsSource = pageTypes;
@@ -104,6 +111,8 @@ namespace HxcMigrationImportExportTool
         {
             var parser = new CustomTableParser();
             var tables = parser.Parse(xmlFile);
+
+            _customTables = tables;
 
             txtCustomCount.Text = tables.Count.ToString();
             gridCustom.ItemsSource = tables;
@@ -131,12 +140,21 @@ namespace HxcMigrationImportExportTool
 
             txtResourceCount.Text = _resourceGridRows.Count.ToString();
             gridResource.ItemsSource = _resourceGridRows;
+            _resources = _resourceStrings;
+
+            txtResourceCount.Text = resources.Count.ToString();
 
             ClearDetail();
         }
 
-        private void GridPageTypes_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
+            gridResource.ItemsSource = resources;
+
+            MessageBox.Show($"ResourceStrings detected : {resources.Count}");
+
+        #region Tabs List actions
+        #endregion
+
+        #region Tabs List actions
             if (gridPageTypes.SelectedItem is K13PageType pageType)
             {
                 ConfigureDetailGridForPageType();
