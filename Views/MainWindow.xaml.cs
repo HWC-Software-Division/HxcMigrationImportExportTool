@@ -140,21 +140,15 @@ namespace HxcMigrationImportExportTool
 
             txtResourceCount.Text = _resourceGridRows.Count.ToString();
             gridResource.ItemsSource = _resourceGridRows;
-            _resources = _resourceStrings;
-
-            txtResourceCount.Text = resources.Count.ToString();
 
             ClearDetail();
         }
 
-            gridResource.ItemsSource = resources;
-
-            MessageBox.Show($"ResourceStrings detected : {resources.Count}");
-
-        #region Tabs List actions
         #endregion
 
         #region Tabs List actions
+        private void GridPageTypes_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
             if (gridPageTypes.SelectedItem is K13PageType pageType)
             {
                 ConfigureDetailGridForPageType();
@@ -193,7 +187,7 @@ namespace HxcMigrationImportExportTool
             // ตอนนี้ยังไม่ทำ detail ของ custom table
             // ภายหลังค่อยเพิ่ม ConfigureDetailGridForCustomTable() ได้
             ClearDetail();
-        }
+        } 
 
         private void TabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -209,6 +203,8 @@ namespace HxcMigrationImportExportTool
             }
             ClearDetail();
         }
+         
+        #endregion
 
         private void BtnDbSetting_Click(object sender, RoutedEventArgs e)
         {
@@ -332,4 +328,4 @@ namespace HxcMigrationImportExportTool
         public string Language { get; set; } = string.Empty;
         public string Value { get; set; } = string.Empty;
     }
-}
+} 
