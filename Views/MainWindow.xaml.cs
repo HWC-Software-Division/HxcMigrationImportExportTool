@@ -33,9 +33,12 @@ namespace HxcMigrationImportExportTool
                 Filter = "Zip files (*.zip)|*.zip"
             };
 
+            dialog.Filter = "Zip files (*.zip)|*.zip";
+
             if (dialog.ShowDialog() == true)
             {
                 txtZipFile.Text = dialog.FileName;
+
                 AnalyzeZip(dialog.FileName);
             }
         }
@@ -95,10 +98,12 @@ namespace HxcMigrationImportExportTool
             Logger.Log("Analyze ZIP finished");
         }
 
+
         #region Load and Parse XML
         private void LoadPageTypes(string xmlFile)
         {
             var parser = new PageTypeParser();
+
             var pageTypes = parser.Parse(xmlFile);
 
             _pageTypes = pageTypes; 
@@ -110,12 +115,16 @@ namespace HxcMigrationImportExportTool
         private void LoadCustomTables(string xmlFile)
         {
             var parser = new CustomTableParser();
+
             var tables = parser.Parse(xmlFile);
 
             _customTables = tables;
 
             txtCustomCount.Text = tables.Count.ToString();
             gridCustom.ItemsSource = tables;
+
+
+            MessageBox.Show($"CustomTables detected : {tables.Count}");
         }
 
         private void LoadResourceStrings(string xmlFile)
@@ -145,6 +154,7 @@ namespace HxcMigrationImportExportTool
         }
 
         #endregion
+
 
         #region Tabs List actions
         private void GridPageTypes_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -206,14 +216,36 @@ namespace HxcMigrationImportExportTool
          
         #endregion
 
+        #region Action Click
         private void BtnDbSetting_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("DB Setting clicked");
+            var win = new DbSettingWindow();
+            win.ShowDialog();
         }
 
         private void BtnMigrate_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Migrate Selected clicked");
+            //MessageBox.Show("Start Migrate 🚀");
+
+            var win = new MigrateSelectionWindow(
+                _pageTypes,
+                _resources,
+                _customTables
+            );
+
+            if (win.ShowDialog() == true)
+            {
+                var api = new XbykApiService("http://localhost:34486/", "dev-key");
+
+                var service = new MigrateService(api);
+
+                var (success, fail, skip) = await service.MigratePageTypesAsync(win.SelectedPageTypes);
+
+                MessageBox.Show($"✅ Success: {success}\n" +
+                                $"⏭ Skip: {skip}\n" +
+                                $"❌ Fail: {fail}"
+                );
+            }
         }
 
         private void BtnExportReport_Click(object sender, RoutedEventArgs e)
@@ -221,7 +253,7 @@ namespace HxcMigrationImportExportTool
             MessageBox.Show("Export Report clicked");
         }
 
-        private void BtnClearScreen_Click(object sender, RoutedEventArgs e)
+        private async void BtnMigrate_Click(object sender, RoutedEventArgs e)
         {
             txtZipFile.Text = string.Empty;
             txtPageTypeCount.Text = "0";
@@ -236,38 +268,6 @@ namespace HxcMigrationImportExportTool
             _resourceGridRows.Clear();
 
             ClearDetail();
-        }
-
-        private void ClearDetail()
-        {
-            gridDetail.ItemsSource = null;
-            ConfigureDetailGridForEmpty();
-        }
-
-        private void ConfigureDetailGridForEmpty()
-        {
-            gridDetail.AutoGenerateColumns = false;
-            gridDetail.Columns.Clear();
-        }
-
-        private void ConfigureDetailGridForPageType()
-        {
-            gridDetail.AutoGenerateColumns = false;
-            gridDetail.Columns.Clear();
-
-            gridDetail.Columns.Add(new DataGridTextColumn
-            {
-                Header = "Column",
-                Binding = new System.Windows.Data.Binding("Column"),
-                Width = new DataGridLength(1, DataGridLengthUnitType.Star)
-            });
-
-            gridDetail.Columns.Add(new DataGridTextColumn
-            {
-                Header = "Data Type",
-                Binding = new System.Windows.Data.Binding("DataType"),
-                Width = new DataGridLength(220)
-            });
         }
 
         private void ConfigureDetailGridForResourceString()
@@ -321,11 +321,9 @@ namespace HxcMigrationImportExportTool
         public string LanguagesDisplay { get; set; } = string.Empty;
 
         public K13ResourceString? Resource { get; set; }
-    }
+        #endregion
 
-    public class ResourceValueRow
-    {
-        public string Language { get; set; } = string.Empty;
-        public string Value { get; set; } = string.Empty;
+        #endregion
+
     }
 } 
