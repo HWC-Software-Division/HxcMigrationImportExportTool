@@ -1,14 +1,22 @@
-﻿using HxcMigrationImportExportTool.Parsers;
+﻿using HxcMigrationImportExportTool.Models;
+using HxcMigrationImportExportTool.Parsers;
 using HxcMigrationImportExportTool.Services;
-using HxcMigrationImportExportTool.Models;
+using HxcMigrationImportExportTool.Views;
 using Microsoft.Win32;
+using System.Diagnostics;
 using System.IO;
 using System.Resources;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
-using System.Linq;
-using System.Collections.Generic;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
+using System.Xml.Linq;
 
 namespace HxcMigrationImportExportTool
 {
@@ -167,7 +175,7 @@ namespace HxcMigrationImportExportTool
             else
             {
                 ClearDetail();
-            }
+            } 
         }
 
         private void GridResource_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -223,13 +231,13 @@ namespace HxcMigrationImportExportTool
             win.ShowDialog();
         }
 
-        private void BtnMigrate_Click(object sender, RoutedEventArgs e)
+        private async void BtnMigrate_Click(object sender, RoutedEventArgs e)
         {
             //MessageBox.Show("Start Migrate 🚀");
 
             var win = new MigrateSelectionWindow(
                 _pageTypes,
-                _resources,
+                _resourceStrings,
                 _customTables
             );
 
@@ -251,9 +259,9 @@ namespace HxcMigrationImportExportTool
         private void BtnExportReport_Click(object sender, RoutedEventArgs e)
         {
             MessageBox.Show("Export Report clicked");
-        }
+        } 
 
-        private async void BtnMigrate_Click(object sender, RoutedEventArgs e)
+        private async void BtnClearScreen_Click(object sender, RoutedEventArgs e)
         {
             txtZipFile.Text = string.Empty;
             txtPageTypeCount.Text = "0";
@@ -268,6 +276,38 @@ namespace HxcMigrationImportExportTool
             _resourceGridRows.Clear();
 
             ClearDetail();
+        }
+
+        private void ClearDetail()
+        {
+            gridDetail.ItemsSource = null;
+            ConfigureDetailGridForEmpty();
+        }
+         
+        private void ConfigureDetailGridForEmpty()
+        {
+            gridDetail.AutoGenerateColumns = false;
+            gridDetail.Columns.Clear();
+        }
+
+        private void ConfigureDetailGridForPageType()
+        {
+            gridDetail.AutoGenerateColumns = false;
+            gridDetail.Columns.Clear();
+
+            gridDetail.Columns.Add(new DataGridTextColumn
+            {
+                Header = "Column",
+                Binding = new System.Windows.Data.Binding("Column"),
+                Width = new DataGridLength(1, DataGridLengthUnitType.Star)
+            });
+
+            gridDetail.Columns.Add(new DataGridTextColumn
+            {
+                Header = "Data Type",
+                Binding = new System.Windows.Data.Binding("DataType"),
+                Width = new DataGridLength(220)
+            });
         }
 
         private void ConfigureDetailGridForResourceString()
@@ -310,6 +350,8 @@ namespace HxcMigrationImportExportTool
                 Width = new DataGridLength(180)
             });
         }
+
+        #endregion
     }
 
     public class ResourceStringGridRow
@@ -321,9 +363,11 @@ namespace HxcMigrationImportExportTool
         public string LanguagesDisplay { get; set; } = string.Empty;
 
         public K13ResourceString? Resource { get; set; }
-        #endregion
-
-        #endregion
-
     }
-} 
+
+    public class ResourceValueRow
+    {
+        public string Language { get; set; } = string.Empty;
+        public string Value { get; set; } = string.Empty;
+    }
+}
