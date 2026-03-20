@@ -88,6 +88,7 @@ namespace HxcMigrationImportExportTool
             Logger.Log("Analyze ZIP finished");
         }
 
+
         #region Load and Parse XML
         private void LoadPageTypes(string xmlFile)
         {
@@ -131,6 +132,7 @@ namespace HxcMigrationImportExportTool
 
         #endregion
 
+
         #region Tabs List actions
         private void GridPageTypes_SelectionChanged(object sender, SelectionChangedEventArgs e)
         { 
@@ -164,9 +166,9 @@ namespace HxcMigrationImportExportTool
             
         }
 
-        #endregion
+        #endregion End Tabs List actions
 
-        #region Action Click
+        #region Action Click Ja 
         private void BtnDbSetting_Click(object sender, RoutedEventArgs e)
         {
             var win = new DbSettingWindow();
@@ -181,26 +183,13 @@ namespace HxcMigrationImportExportTool
                 _pageTypes,
                 _resources,
                 _customTables
-            );
-
-            //if (win.ShowDialog() == true)
-            //{
-            //    // ✅ ดึงค่าที่เลือก
-            //    var selectedPageTypes = win.SelectedPageTypes;
-            //    var selectedResources = win.SelectedResources;
-            //    var selectedCustomTables = win.SelectedCustomTables;
-
-            //    MessageBox.Show($"Selected PageTypes: {selectedPageTypes.Count}");
-            //}
+            ); 
 
             if (win.ShowDialog() == true)
             {
                 var api = new XbykApiService("http://localhost:34486/", "dev-key");
 
-                var service = new MigrateService(api);
-
-                //var (success, fail) = await service.MigratePageTypesAsync(win.SelectedPageTypes);
-                //MessageBox.Show($"✅ Success: {success}\n❌ Fail: {fail}");
+                var service = new MigrateService(api); 
 
                 var (success, fail, skip) = await service.MigratePageTypesAsync(win.SelectedPageTypes);
 
@@ -245,7 +234,7 @@ namespace HxcMigrationImportExportTool
             gridCustom.SelectedItem = null;
         }
 
-        #endregion
+        #endregion End Action Click Ja 
 
     }
 }

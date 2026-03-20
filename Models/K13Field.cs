@@ -16,6 +16,6 @@ namespace HxcMigrationImportExportTool.Models
         public string? FormControl { get; set; }
         public string? Caption { get; set; }
 
-        public string? DataSource { get; set; } //option
+        public string? DataSource { get; set; }
     }
 }
