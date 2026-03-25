@@ -66,7 +66,9 @@ namespace HxcMigrationImportExportTool.Views
                 .Select(x => x.Data)
                 .ToList();
 
-            MessageBox.Show($"Selected PageTypes: {SelectedPageTypes.Count}");
+            MessageBox.Show($"Selected PageTypes: {SelectedPageTypes.Count}\n"+
+                $"Selected Resources: {SelectedResources.Count}\n"+
+                $"Selected CustomTables: {SelectedCustomTables.Count}");
 
             DialogResult = true;
             Close();
@@ -85,7 +87,17 @@ namespace HxcMigrationImportExportTool.Views
             listPageTypes.Items.Refresh();
         }
 
+        private void ResourceStringAll_Checked(object sender, RoutedEventArgs e)
+        {
+            bool isChecked = ((CheckBox)sender).IsChecked == true;
 
+            foreach (var item in Resources)
+            {
+                item.IsSelected = isChecked;
+            }
+
+            listResources.Items.Refresh();
+        }
 
         #endregion
     }

@@ -233,26 +233,73 @@ namespace HxcMigrationImportExportTool
 
         private async void BtnMigrate_Click(object sender, RoutedEventArgs e)
         {
-            //MessageBox.Show("Start Migrate 🚀");
-
             var win = new MigrateSelectionWindow(
                 _pageTypes,
                 _resourceStrings,
                 _customTables
             );
 
-            if (win.ShowDialog() == true)
+            if (win.ShowDialog() != true)
             {
-                var api = new XbykApiService("http://localhost:34486/", "dev-key");
+                return;
+            }
 
+            if ((win.SelectedPageTypes == null || win.SelectedPageTypes.Count == 0) &&
+                (win.SelectedResources == null || win.SelectedResources.Count == 0) &&
+                (win.SelectedCustomTables == null || win.SelectedCustomTables.Count == 0))
+            {
+                MessageBox.Show("Please select at least one item to migrate.");
+                return;
+            }
+
+            try
+            {
+                btnMigrate.IsEnabled = false;
+
+                var api = new XbykApiService("http://localhost:34486/", "dev-key");
                 var service = new MigrateService(api);
 
-                var (success, fail, skip) = await service.MigratePageTypesAsync(win.SelectedPageTypes);
+                int pageTypeSuccess = 0;
+                int pageTypeFail = 0;
+                int pageTypeSkip = 0;
 
-                MessageBox.Show($"✅ Success: {success}\n" +
-                                $"⏭ Skip: {skip}\n" +
-                                $"❌ Fail: {fail}"
+                int localStringSuccess = 0;
+                int localStringFail = 0;
+
+                if (win.SelectedPageTypes != null && win.SelectedPageTypes.Count > 0)
+                {
+                    var pageTypeResult = await service.MigratePageTypesAsync(win.SelectedPageTypes);
+                    pageTypeSuccess = pageTypeResult.success;
+                    pageTypeFail = pageTypeResult.fail;
+                    pageTypeSkip = pageTypeResult.skip;
+                }
+
+                if (win.SelectedResources != null && win.SelectedResources.Count > 0)
+                {
+                    var localStringResult = await service.MigrateLocalStringsAsync(win.SelectedResources);
+                    localStringSuccess = localStringResult.success;
+                    localStringFail = localStringResult.fail;
+                }
+
+                MessageBox.Show(
+                    $"PageType\n" +
+                    $"✅ Success: {pageTypeSuccess}\n" +
+                    $"⏭ Skip: {pageTypeSkip}\n" +
+                    $"❌ Fail: {pageTypeFail}\n\n" +
+                    $"LocalString\n" +
+                    $"✅ Success: {localStringSuccess}\n" +
+                    $"❌ Fail: {localStringFail}",
+                    "Migrate Result"
                 );
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"BtnMigrate_Click Error: {ex}");
+                MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                btnMigrate.IsEnabled = true;
             }
         }
 

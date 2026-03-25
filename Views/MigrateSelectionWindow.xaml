@@ -52,6 +52,9 @@
  
                 <!-- Resource -->
                 <TextBlock Text="ResourceString" FontWeight="Bold" Margin="0,15,0,5"/>
+                <CheckBox Content="Select All" Margin="5" 
+                          Checked="ResourceStringAll_Checked"
+                          Unchecked="ResourceStringAll_Checked"/>
                 <ItemsControl Name="listResources" ItemTemplate="{StaticResource ResourceTemplate}"/>
 
                 <!-- Custom -->

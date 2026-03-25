@@ -1,88 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-
-using System.Data.SqlClient;
+using System.Linq;
+using System.Threading.Tasks;
 using HxcMigrationImportExportTool.Models;
 
 namespace HxcMigrationImportExportTool.Services
 {
     public class MigrateService
     {
-        //private readonly string _connStr; 
-
-        //public MigrateService(string connStr)
-        //{
-        //    _connStr = connStr;
-        //}
-
-        //public void InsertPageType(K13PageType pt)
-        //{
-        //    using var conn = new SqlConnection(_connStr);
-        //    conn.Open();
-
-        //    var checkCmd = new SqlCommand(
-        //        "SELECT COUNT(*) FROM CMS_Class WHERE ClassName = @name",
-        //        conn);
-
-        //    checkCmd.Parameters.AddWithValue("@name", pt.ClassName);
-
-        //    int exists = (int)checkCmd.ExecuteScalar();
-
-        //    if (exists > 0)
-        //    {
-        //        return; // ข้าม
-        //    }
-
-        //    var cmd = new SqlCommand(@"
-        //        INSERT INTO CMS_Class (
-        //            ClassName,
-        //            ClassDisplayName,
-        //            ClassTableName,
-        //            ClassGUID,
-        //            ClassIsDocumentType,
-        //            ClassIsCoupledClass,
-        //            ClassType
-        //        )
-        //        VALUES (
-        //            @name,
-        //            @display,
-        //            @table,
-        //            NEWID(),
-        //            1,
-        //            1,
-        //            'Content'
-        //        )
-        //        ", conn);
-
-        //     cmd.Parameters.AddWithValue("@name", pt.ClassName);
-        //     cmd.Parameters.AddWithValue("@display", pt.DisplayName ?? "");
-        //     cmd.Parameters.AddWithValue("@table", pt.TableName ?? "");
-
-        //     cmd.ExecuteNonQuery();
-        //} 
-
         private readonly XbykApiService _api;
 
         public MigrateService(XbykApiService api)
         {
             _api = api;
         }
-         
 
-        //Mapping Function
         private object MapToContentType(K13PageType pt)
         {
             return new
             {
                 name = pt.DisplayName,
                 codeName = pt.ClassName,
-
                 fields = pt.Fields.Select(f => new
                 {
                     name = f.Column,
                     dataType = MapDataType(f.DataType),
-
                     isRequired = f.Required,
                     size = GetFieldSize(f),
                     defaultValue = f.DefaultValue,
@@ -90,6 +33,23 @@ namespace HxcMigrationImportExportTool.Services
                     caption = f.Caption ?? f.Column,
                     dataSource = f.DataSource
                 }).ToList()
+            };
+        }
+
+        private object MapToLocalString(K13ResourceString resource)
+        {
+            return new
+            {
+                id = resource.Id,
+                key = resource.Key,
+                description = resource.Description,
+                values = (resource.Values ?? new Dictionary<string, string>())
+                    .Select(x => new
+                    {
+                        language = x.Key,
+                        value = x.Value
+                    })
+                    .ToList()
             };
         }
 
@@ -107,12 +67,11 @@ namespace HxcMigrationImportExportTool.Services
                 "guid" => "guid",
                 "datetime" => "dateTime",
                 "date" => "date",
-
                 "file" => "mediaFiles",
                 "attachment" => "mediaFiles",
                 "pages" => "pages",
                 "taxonomy" => "taxonomy",
-                _ => "text" // fallback กันพัง
+                _ => "text"
             };
         }
 
@@ -138,7 +97,6 @@ namespace HxcMigrationImportExportTool.Services
                 "media selection" => "media",
                 "file selector" => "media",
                 "image selector" => "media",
-
                 "textbox" => "textbox",
                 "textarea" => "textarea",
                 "dropdownlist" => "dropdown",
@@ -150,9 +108,10 @@ namespace HxcMigrationImportExportTool.Services
         private int GetFieldSize(K13Field f)
         {
             if (f.Size > 0)
+            {
                 return f.Size;
+            }
 
-            // fallback
             return f.DataType.ToLower() switch
             {
                 "text" => 200,
@@ -171,11 +130,8 @@ namespace HxcMigrationImportExportTool.Services
             foreach (var pt in pageTypes)
             {
                 try
-                { 
-                    // mapping
+                {
                     var payload = MapToContentType(pt);
-
-                    // create
                     var result = await _api.CreateContentTypeAsync(payload);
 
                     if (result.Contains("Already exists"))
@@ -192,7 +148,6 @@ namespace HxcMigrationImportExportTool.Services
                         fail++;
                         Logger.Log($"Failed: {pt.ClassName}");
                     }
-                     
                 }
                 catch (Exception ex)
                 {
@@ -204,6 +159,51 @@ namespace HxcMigrationImportExportTool.Services
             return (success, fail, skip);
         }
 
-    }
+        public async Task<(int success, int fail)> MigrateLocalStringsAsync(List<K13ResourceString> resources)
+        {
+            int success = 0;
+            int fail = 0;
 
+            if (resources == null || resources.Count == 0)
+            {
+                return (0, 0);
+            }
+
+            try
+            {
+                var payload = resources
+                    .Select(MapToLocalString)
+                    .ToList();
+
+                var resultJson = await _api.ImportLocalStringsAsync(payload);
+
+                Logger.Log("LocalString API response:");
+                Logger.Log(resultJson);
+
+                var options = new System.Text.Json.JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+
+                var result = System.Text.Json.JsonSerializer.Deserialize<LocalStringBatchApiResponse>(resultJson, options);
+
+                if (result != null)
+                {
+                    success = result.TotalKeysProcessed;
+                    fail = result.Errors?.Count ?? 0;
+                }
+                else
+                {
+                    fail = resources.Count;
+                }
+            }
+            catch (Exception ex)
+            {
+                fail = resources.Count;
+                Logger.Log($"Error sending local strings: {ex}");
+            }
+
+            return (success, fail);
+        }
+    }
 }
