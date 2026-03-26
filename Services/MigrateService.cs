@@ -16,45 +16,24 @@ namespace HxcMigrationImportExportTool.Services
             _api = api;
         }
 
-        private object MapToContentType(K13PageType pt)
+        #region ContentType Migration      
+        
+        private string MapDataType(string type ,K13Field f)
         {
-            return new
-            {
-                name = pt.DisplayName,
-                codeName = pt.ClassName,
-                fields = pt.Fields.Select(f => new
-                {
-                    name = f.Column,
-                    dataType = MapDataType(f.DataType),
-                    isRequired = f.Required,
-                    size = GetFieldSize(f),
-                    defaultValue = f.DefaultValue,
-                    fieldType = MapFormControl(f),
-                    caption = f.Caption ?? f.Column,
-                    dataSource = f.DataSource
-                }).ToList()
-            };
-        }
+            var control = f.FormControl?.ToLower();
 
-        private object MapToLocalString(K13ResourceString resource)
-        {
-            return new
-            {
-                id = resource.Id,
-                key = resource.Key,
-                description = resource.Description,
-                values = (resource.Values ?? new Dictionary<string, string>())
-                    .Select(x => new
-                    {
-                        language = x.Key,
-                        value = x.Value
-                    })
-                    .ToList()
-            };
-        }
+            if (control == "mediaselectioncontrol") {
+                type = "contentitemreference";
+                return type;
+            }
 
-        private string MapDataType(string type)
-        {
+            if (control == "pageselector")
+            {
+                type = "webpages";
+                return type;
+            }
+
+
             return type?.ToLower() switch
             {
                 "text" => "text",
@@ -73,34 +52,31 @@ namespace HxcMigrationImportExportTool.Services
                 "taxonomy" => "taxonomy",
                 _ => "text"
             };
-        }
-
-        private string MapFieldType(string type)
-        {
-            return type?.ToLower() switch
-            {
-                "text" => "textbox",
-                "longtext" => "textarea",
-                "boolean" => "checkbox",
-                "integer" => "textbox",
-                "datetime" => "datetime",
-                _ => "textbox"
-            };
-        }
+        } 
 
         private string MapFormControl(K13Field f)
         {
-            var control = f.FormControl?.ToLower();
+            var control = f.FormControl?.ToLower(); 
 
             return control switch
             {
-                "media selection" => "media",
-                "file selector" => "media",
-                "image selector" => "media",
-                "textbox" => "textbox",
-                "textarea" => "textarea",
+                //Media
+                "media selection" => "contentitemselector", 
+                "media" => "contentitemselector", 
+
+                //Page selector
+                "page selector" => "pageselector",
+                "pageselector" => "pageselector",
+
+                //Dropdown
                 "dropdownlist" => "dropdown",
                 "checkbox" => "checkbox",
+                "radiobuttonlist" => "dropdown",
+
+                //Text
+                "textbox" => "textbox",
+                "textarea" => "textarea",
+                
                 _ => "textbox"
             };
         }
@@ -121,6 +97,27 @@ namespace HxcMigrationImportExportTool.Services
             };
         }
 
+        private object MapToContentType(K13PageType pt)
+        {
+            return new
+            {
+                name = pt.DisplayName,
+                codeName = pt.ClassName,
+                fields = pt.Fields.Select(f => new
+                {
+                    name = f.Column,
+                    dataType = MapDataType(f.DataType, f),
+                    isRequired = f.Required,
+                    size = GetFieldSize(f),
+                    defaultValue = f.DefaultValue,
+                    fieldType = MapFormControl(f),
+                    caption = f.Caption ?? f.Column,
+                    dataSource = f.DataSource,
+                    minItems = f.MinItems.HasValue ? 1 : (int?)null,
+                    maxItems = f.MaxItems.HasValue ? 1 : (int?)null
+                }).ToList()
+            };
+        }
         public async Task<(int success, int fail, int skip)> MigratePageTypesAsync(List<K13PageType> pageTypes)
         {
             int success = 0;
@@ -158,6 +155,25 @@ namespace HxcMigrationImportExportTool.Services
 
             return (success, fail, skip);
         }
+        #endregion ContentType Migration
+
+        #region LocalString Migration        
+        private object MapToLocalString(K13ResourceString resource)
+        {
+            return new
+            {
+                id = resource.Id,
+                key = resource.Key,
+                description = resource.Description,
+                values = (resource.Values ?? new Dictionary<string, string>())
+                    .Select(x => new
+                    {
+                        language = x.Key,
+                        value = x.Value
+                    })
+                    .ToList()
+            };
+        } 
 
         public async Task<(int success, int fail)> MigrateLocalStringsAsync(List<K13ResourceString> resources)
         {
@@ -205,5 +221,6 @@ namespace HxcMigrationImportExportTool.Services
 
             return (success, fail);
         }
+        #endregion LocalString Migration
     }
 }

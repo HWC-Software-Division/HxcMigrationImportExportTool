@@ -17,5 +17,8 @@ namespace HxcMigrationImportExportTool.Models
         public string? Caption { get; set; }
 
         public string? DataSource { get; set; }
+         
+        public int? MinItems { get; set; }
+        public int? MaxItems { get; set; } 
     }
 }
